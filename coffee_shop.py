@@ -39,7 +39,7 @@ def main_menu():
         table.add_row("2", "")
         table.add_row("3", "List my orders")
         table.add_row("4", "")
-        table.add_row("5", "")
+        table.add_row("5", "Play Snake")
         table.add_row("6", "")
         table.add_row("7", "")
         table.add_row("8", "Admin menu")
@@ -53,9 +53,12 @@ def main_menu():
             run_main_menu = False
             exit()
         elif choice_main_menu == 1:
+            run_main_menu = False
             product_menu()
         elif choice_main_menu == 3:
-            print_orders_with_spec(input("What's your name?"))
+            print_orders_with_spec(input("What's your name? ---> "))
+        elif choice_main_menu == 5:
+            import snake
         elif choice_main_menu == 8:
             main_admin_menu()
         else:
@@ -107,9 +110,9 @@ def product_menu():
 
     os.system('clear')
 
-    run_product_menu = True
+    run_menu = True
 
-    while run_product_menu == True:
+    while run_menu == True:
         with db_session() as session:
             products = db_session.scalars(select(Products))
 
@@ -132,7 +135,7 @@ def product_menu():
         if user_choice == 1:
             new_order()
         elif user_choice == 2:
-            run_product_menu = False
+            run_menu = False
             main_menu()
 
 
@@ -148,6 +151,7 @@ def new_order():
         session.commit()
 
     add_order_line(order_id, order_client)
+
     more_products = True
     while more_products == True:
         if input(f"{order_client}, do you want anything else? (Yes/No) ---> ").lower() == "yes":
