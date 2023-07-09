@@ -43,8 +43,12 @@ class Products(Base):
     name: Mapped[required_name]
     price: Mapped[std_value]
     description: Mapped[str]
+    active: Mapped[bool] = mapped_column(nullable = False, default = True)
 
-    transactions: Mapped['ProductTransactions'] = relationship(back_populates='product')
+    # menu_category_id: Mapped[int] = mapped_column(ForeignKey('productmenu_category.id'))
+
+    transactions: Mapped[List['ProductTransactions']] = relationship(back_populates='product')
+    # menu_category: Mapped['ProductMenuCategory'] = relationship(back_populates='products')
 
     created: Mapped[def_timestamp]
     updated: Mapped[upd_timestamp]
@@ -77,15 +81,27 @@ class Orders(Base):
     def __init__(self, order_client):
         self.order_client = order_client
 
+"""
+class ProductMenuCategory(Base):
+    __tablename__ = 'productmenu_category'
+
+    id: Mapped[intpk]
+    category: Mapped[required_name]
+
+    products: Mapped[List['Products']] = relationship(back_populates='menu_category')
+
+    created: Mapped[def_timestamp]
+    updated: Mapped[upd_timestamp]
+"""
+
+
 class ProductTransactions(Base):
     __tablename__ = 'product_transactions'
 
-    id: Mapped[intpk]
-    
     # trans_type: Mapped[int] = mapped_column(nullable = False, default = 1)
 
-    order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), nullable=False)
-    product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), nullable=False)
+    order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'), primary_key = True, nullable=False)
+    product_id: Mapped[int] = mapped_column(ForeignKey('products.id'), primary_key = True, nullable=False)
 
     quantity: Mapped[int] = mapped_column(nullable = False, default = 1)
     price: Mapped[std_value]

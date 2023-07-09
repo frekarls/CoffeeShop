@@ -78,7 +78,7 @@ def main_admin_menu():
         table.add_row("1", "List products")
         table.add_row("2", "Add products")
         table.add_row("3", "Edit products")
-        table.add_row("4", "Delete products")
+        table.add_row("4", "Activate/Deactivate product")
         table.add_row("5", "List orders")
         table.add_row("8", "Main menu")
         table.add_row("9", "Exit program")
@@ -97,7 +97,7 @@ def main_admin_menu():
         elif choice_main_menu == 3:
             edit_product(choose_product("edit"))
         elif choice_main_menu == 4:
-            delete_product(choose_product("delete"))
+            alter_product_active_status(choose_product("alter active status"))
         elif choice_main_menu == 5:
             print_orders_with_spec(None)
         elif choice_main_menu == 8:
@@ -113,8 +113,10 @@ def product_menu():
     run_menu = True
 
     while run_menu == True:
+
+        sql_stmt = select(Products).where(Products.active == True)
         with db_session() as session:
-            products = db_session.scalars(select(Products))
+            products = db_session.scalars(sql_stmt)
 
             table = Table(title = "Coffee-shop menu")
 
@@ -278,6 +280,16 @@ def add_product():
     print(f"Added to the products list")
 
 
+def alter_product_active_status(product_id):
+
+    sql_stmt = select(Products).where(Products.id == product_id)
+
+    with db_session() as session:
+        product = session.execute(sql_stmt).scalar_one()
+        product.active = not product.active
+        session.execute(sql_stmt).scalar_one()
+        session.commit()
+
 def delete_product(product_id):
     with db_session() as session:
         product = session.get(Products, product_id)
@@ -304,6 +316,7 @@ def product_table_create(title):
             Column(header="Name"),
             Column(header="Price", justify='right'),
             Column(header="Description"),
+            Column(header="Active"),
             Column(header="Created"),
             Column(header="Last updated"),
             title = title
@@ -317,7 +330,7 @@ def print_products():
         for product in products:
             product_table.add_row(
                 str(product.id), product.name, str(product.price),
-                product.description, str(product.created), str(product.updated)
+                product.description, str(product.active), str(product.created), str(product.updated)
                 )
     console.print(product_table)
 
@@ -335,11 +348,8 @@ def edit_product(product_id):
             product = session.execute(sql_stmt).scalar_one()
             
             name = input(f"Product name: ({product.name}) ") or product.name
-            print(name)
             price = input(f"Price: ({product.price}) ") or product.price
-            print(price)
             description = input(f"Description: ({product.description}) ") or product.description
-            print(description)
 
             product.name = name
             product.price = price

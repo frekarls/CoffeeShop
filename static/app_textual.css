@@ -1,0 +1,44 @@
+/* CSS file for textual app */
+
+#app-layout {
+    layout: grid;
+    grid-size: 4 4;  /* two columns */
+    grid-columns: 1fr;
+    grid_rows: 1fr;
+}
+
+#main-menu {
+    column-span: 1;
+    row-span: 4;
+}
+
+#main-menu Button{
+    height:3;
+    padding:0;
+    content-align: center middle;
+    width: 100%;
+
+}
+
+#main-data{
+    column-span:3;
+    row-span:2;
+}
+
+#order-list{
+
+}
+
+Header {
+    dock: top;
+    height: 3;
+    content-align: center middle;
+    background: blue;
+    color: white;
+}
+
+Footer {
+    height: 3;
+    dock: bottom;
+}
+

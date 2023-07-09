@@ -1,0 +1,20 @@
+Header {
+    dock: top;
+    height: 3;
+}
+Footer {
+    dock: bottom;
+    height: 3;
+}
+
+#main-menu {
+    width: 1fr;
+}
+
+#main-menu Button {
+    width: 100%;
+}
+
+#main-options {
+    width: 3fr;
+}
