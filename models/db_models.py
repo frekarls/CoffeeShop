@@ -45,25 +45,27 @@ class Products(Base):
     description: Mapped[str]
     active: Mapped[bool] = mapped_column(nullable = False, default = True)
 
-    # menu_category_id: Mapped[int] = mapped_column(ForeignKey('productmenu_category.id'))
+    menu_category_id: Mapped[int] = mapped_column(ForeignKey('productmenu_categories.id'))
 
     transactions: Mapped[List['ProductTransactions']] = relationship(back_populates='product')
-    # menu_category: Mapped['ProductMenuCategory'] = relationship(back_populates='products')
+    menu_category: Mapped['ProductMenuCategories'] = relationship(back_populates='products')
 
     created: Mapped[def_timestamp]
     updated: Mapped[upd_timestamp]
 
-    def __init__(self, name, price, description):
+    def __init__(self, name, price, description, menu_category_id):
         self.name = name
         self.price = price
         self.description = description
+        self.menu_category_id = menu_category_id
     
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
             'price': self.price,
-            'description': self.description
+            'description': self.description,
+            'menu_category_id': self.menu_category_id
         }
 
 class Orders(Base):
@@ -81,18 +83,19 @@ class Orders(Base):
     def __init__(self, order_client):
         self.order_client = order_client
 
-"""
-class ProductMenuCategory(Base):
-    __tablename__ = 'productmenu_category'
+
+class ProductMenuCategories(Base):
+    __tablename__ = 'productmenu_categories'
 
     id: Mapped[intpk]
-    category: Mapped[required_name]
+    name: Mapped[required_name]
+    sort_order: Mapped[float]
 
     products: Mapped[List['Products']] = relationship(back_populates='menu_category')
 
     created: Mapped[def_timestamp]
     updated: Mapped[upd_timestamp]
-"""
+
 
 
 class ProductTransactions(Base):

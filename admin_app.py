@@ -39,10 +39,6 @@ class CoffeeShopAdminApp(App):
     def show_order_screen(self):
         self.push_screen(OrderListScreen())
 
-    @on(Button.Pressed, "#prod-trans-list")
-    def show_prod_trans_screen(self):
-        self.push_screen(ProductTransactionsListScreen())
-
     @on(Button.Pressed, "#add-product-button")
     def open_add_product_screen(self):
         self.push_screen(AddProductScreen())
@@ -61,6 +57,30 @@ class CoffeeShopAdminApp(App):
             session.commit()
         
         self.push_screen(ProductListScreen())
+
+    @on(Button.Pressed, "#submit-order")
+    def submit_and_validate_order(self):
+        
+        client = self.query_one("#order-client", Input).value
+        sel_product = self.query_one("#order-product", Select).value
+        sel_quantity = int(self.query_one("#order-quantity", Input).value)
+        print(sel_product)
+
+        order = Orders(order_client = client)
+
+        with db_session() as session:
+            price = session.scalar(select(Products.price).where(Products.id == sel_product))
+
+        with db_session() as session:
+            session.add(order)
+            session.flush()
+            order_id = order.id
+            transaction = ProductTransactions(order_id, sel_product, sel_quantity, price)
+            
+            session.add(transaction)
+            session.commit()
+        
+        self.push_screen(MainScreen())
 
     
     def action_add_product(self) -> None:
@@ -116,10 +136,13 @@ class OrderListScreen(Screen):
             with Container(id = "main-options"):
                 yield OrderList(id = "main-data-list")
                 with HorizontalScroll():
-                    yield ProductTransactionsList(order_no = 1)
+                    order_transactions = ProductTransactionsList()
+                    yield order_transactions
     
     def on_data_table_row_selected(self, message: message.Message):
         order_no = message.row_key.value
+        ProductTransactionsList.selected_order(order_id = order_no)
+
 
 """ class ProductTransactionsListScreen(Screen):
 
@@ -148,6 +171,11 @@ class AddProductScreen(Screen):
 
 class AddOrderScreen(Screen):
     def compose(self) -> ComposeResult:
+
+        # get active products for select-field
+        with db_session() as session:
+            active_products = session.scalars(select(Products.name).where(Products.active == True))
+
         yield Header()
         yield Footer()
 
@@ -156,27 +184,29 @@ class AddOrderScreen(Screen):
             with VerticalScroll(id = "main-options"):
                 yield Input(placeholder = "Client", id = "order-client")
 
-                yield SelectActiveProduct(id = "select-product")
-                yield Input(placeholder = "How many", id = "product-quantity")
+                # get active products for select-field
+                with db_session() as session:
+                    active_products = session.scalars(select(Products).where(Products.active == True))
+                    
+
+                    active_products_tuple = tuple(
+                        ((f"{menu_product.name} @{menu_product.price}"),
+                         menu_product.id) 
+                         for menu_product in active_products
+                         )
+
+                    yield Select(
+                        options = active_products_tuple,
+                        prompt = "Select Product",
+                        allow_blank = False,
+                        id = "order-product"
+                        )
                 
-        
+                yield Input(placeholder = "How many", id = "order-quantity")
+                yield Button(label = "Add order", id = "submit-order", variant = "success")
+                    
 
 # Tables / Lists
-
-class SelectActiveProduct(Select):
-
-    def __init__(self, options, prompt :str = "Choose product", allow_blank :bool = False, value, name , id, classes, disabled) -> None:
-
-        super().__init__(self, options, prompt, allow_blank, value, name, id, classes, disabled)
-        sql_stmt = select(Products).where(Products.active == True)
-
-        with db_session() as session:
-            menu_products = session.scalars(sql_stmt)
-            self.options = menu_products
-
-    def on_mount(self) -> None:
-        pass
-
 
 class ProductList(Vertical):
 
@@ -194,6 +224,7 @@ class ProductList(Vertical):
                 table.add_row(product.id, product.name, product.description, product.price, product.active, product.created.strftime("%x"), product.updated.strftime("%x"))
             #self.add_rows(menu_products)
 
+
 class OrderList(Vertical):
 
     def compose(self) -> ComposeResult:
@@ -210,37 +241,34 @@ class OrderList(Vertical):
                 table.add_row(order.id, order.order_client, order.created.strftime("%x"), order.updated.strftime("%x"), key=order.id)
 
 
-
-
 class ProductTransactionsList(Vertical):
-
-    """ def __init__(self, *children :Widget, name :str | None = None, id :str | None = None, classes :str | None = None, disabled :bool = False, order_no :int | None = None):
-        super().__init__(self, *children, name, id, classes, disabled)
-        self.order_no = order_no """
-    
-    def __init__(self, order_no :int | None = None):
-        super().__init__()
-        self.order_no = order_no
 
     def compose(self) -> ComposeResult:
         yield DataTable(zebra_stripes=True)
-
-    def on_mount(self) -> None:
-        
-        if self.order_no is None:
-            sql_stmt = None
-        elif self.order_no is not None:
-            sql_stmt = select(ProductTransactions).where(ProductTransactions.order_id == self.order_no)
-
         
         table = self.query_one(DataTable)
         table.add_columns("Order #", "Product", "Quantity", "Price", "Client")
+        table.cursor_type = "row"
+
+        sql_stmt = select(ProductTransactions)
 
         with db_session() as session:
             if sql_stmt is not None:
                 transactions = session.scalars(sql_stmt)
                 for transaction in transactions:
                     table.add_row(transaction.order_id, transaction.product.name, transaction.quantity, transaction.price, transaction.order.order_client)
+
+    def selected_order(self, order_id) -> None:
+        table = self.query_one(DataTable)
+        for row in table.rows.keys:
+            table.remove_row(row)
+        
+        sql_stmt = select(ProductTransactions).where(ProductTransactions.order_id == order_id)
+
+        with db_session() as session:
+            transactions = session.scalars(sql_stmt)
+            for transaction in transactions:
+                table.add_row(transaction.order_id, transaction.product.name, transaction.quantity, transaction.price, transaction.order.order_client)
 
 
 if __name__ == "__main__":
