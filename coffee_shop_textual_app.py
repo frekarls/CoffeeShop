@@ -225,8 +225,8 @@ class ShoppingCart():
         return cart_list
     
     def order_cart_items(self) -> None:
-        with db_session() as session:
-            
+        pass
+
 
 
 
