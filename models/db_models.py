@@ -89,7 +89,7 @@ class ProductMenuCategories(Base):
 
     id: Mapped[intpk]
     name: Mapped[required_name]
-    sort_order: Mapped[float]
+    sort_order: Mapped[float] = mapped_column(nullable=True)
 
     products: Mapped[List['Products']] = relationship(back_populates='menu_category')
 

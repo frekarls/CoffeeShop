@@ -3,7 +3,7 @@ from rich import print as rprint
 from rich.table import Table,Column
 from rich.console import Console
 from os import system
-from models.db_models import Products, Orders, ProductTransactions
+from models.db_models import Products, Orders, ProductTransactions, ProductMenuCategories
 from sqlalchemy import select, func
 import os
 
@@ -80,6 +80,8 @@ def main_admin_menu():
         table.add_row("3", "Edit products")
         table.add_row("4", "Activate/Deactivate product")
         table.add_row("5", "List orders")
+        table.add_row("6", "Add menu category")
+        table.add_row("7", "List menu categories")
         table.add_row("8", "Main menu")
         table.add_row("9", "Exit program")
 
@@ -100,6 +102,10 @@ def main_admin_menu():
             alter_product_active_status(choose_product("alter active status"))
         elif choice_main_menu == 5:
             print_orders_with_spec(None)
+        elif choice_main_menu == 6:
+            add_menu_category()
+        elif choice_main_menu == 7:
+            print_menu_categories()    
         elif choice_main_menu == 8:
             main_menu()
         else:
@@ -267,10 +273,15 @@ def sum_order(order_id):
 
 
 def add_product():
+    with db_session() as session:
+        categories = session.scalars(select(ProductMenuCategories))
+        for category in categories:
+            print(f"{category.id} - {category.name}")
     product = Products(
         name = input("What is the product name? ---> "),
         price = float(input("Price? ---> ")),
-        description = input("Description of the product ---> ")
+        description = input("Description of the product ---> "),
+        menu_category_id = int(input("Category= ---> "))
     )
 
     with db_session() as session:
@@ -278,6 +289,17 @@ def add_product():
         session.commit()
     
     print(f"Added to the products list")
+
+def add_menu_category():
+    prod_category = ProductMenuCategories(
+        name = input("What is the category name? ---> "),
+    )
+
+    with db_session() as session:
+        session.add(prod_category)
+        session.commit()
+    
+    print(f"Added to the menu category list")
 
 
 def alter_product_active_status(product_id):
@@ -316,6 +338,7 @@ def product_table_create(title):
             Column(header="Name"),
             Column(header="Price", justify='right'),
             Column(header="Description"),
+            Column(header="Menu category"),
             Column(header="Active"),
             Column(header="Created"),
             Column(header="Last updated"),
@@ -330,10 +353,21 @@ def print_products():
         for product in products:
             product_table.add_row(
                 str(product.id), product.name, str(product.price),
-                product.description, str(product.active), str(product.created), str(product.updated)
+                product.description, product.menu_category.name, str(product.active), str(product.created), str(product.updated)
                 )
     console.print(product_table)
 
+def print_menu_categories():
+    
+    category_table = Table("ID", "Category")
+
+    with db_session() as session:
+        categories = session.scalars(select(ProductMenuCategories))
+        for category in categories:
+            category_table.add_row(
+                str(category.id), category.name
+                )
+    console.print(category_table)
 
 def edit_product(product_id):
     

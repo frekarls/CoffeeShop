@@ -1,0 +1,49 @@
+Header {
+    dock: top;
+    height: 3;
+    color: $text;
+}
+Footer {
+    dock: bottom;
+    height: 3;
+}
+
+#main-menu {
+    width: 1fr;
+    padding: 1;
+    background: $background;
+}
+
+#welcome-text{
+    width: 2fr;
+    padding: 1;
+    background: $background;
+    text-style: bold;
+    color: $text;
+    text_align: center;
+}
+
+#product-menu {
+    width: 3fr;
+    padding: 1;
+    background: $background;
+}
+
+#select-menu-category Select {
+    height: 2;
+}
+
+
+.main_menu_buttons {
+    width: 100%;
+    height: 3;
+}
+
+.headings {
+    padding: 2 0 1 0;
+    text-align: center;
+    background: $primary;
+    text-style: bold underline;
+    color: $text;
+}
+
